@@ -757,7 +757,7 @@
     }}
     role="presentation"
   >
-    <div class="modal-content card glass-panel" style="max-width:900px;">
+    <div class="modal-content dash-card form-modal-wide" style="max-width: min(1600px, calc(100vw - 2rem)); width: 100%;">
       <div class="dash-card-header">
         <h3>{modalTitle}</h3>
       </div>
