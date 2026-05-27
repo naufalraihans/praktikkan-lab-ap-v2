@@ -228,7 +228,7 @@
         </div>
       </div>
 
-      <div class="ket-editor">
+      <div class="ket-editor" style="position:sticky; top:1rem; align-self:start;">
         <div class="card glass-panel editor-card">
           <div class="card-header editor-header">
             <h3>💻 Code Editor</h3>
@@ -247,7 +247,7 @@
           <div class="editor-wrapper">
             <div
               bind:this={editorContainer}
-              style="height: 400px; width: 100%; border-radius: 8px; border: 1px solid var(--panel-border); overflow: hidden; background: #1e1e1e;"
+              style="height: 550px; width: 100%; border-radius: 8px; border: 1px solid var(--panel-border); overflow: hidden; background: #1e1e1e;"
             ></div>
           </div>
         </div>
