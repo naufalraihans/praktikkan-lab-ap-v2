@@ -45,10 +45,26 @@ export interface MonacoEditorOptions {
 
 /**
  * Create a Monaco editor instance dengan default config standard project ini.
+ *
+ * Monaco caches character width on first paint. Kalau container masih dalam
+ * CSS animation (animate-fade-in dengan transform) atau font belum loaded,
+ * measurement bisa salah → cursor misalign saat typing.
+ *
+ * Fix: wait for fonts ready + retry layout() di interval setelah create.
  */
 export async function createEditor(container: HTMLElement, opts: MonacoEditorOptions = {}) {
   const m = await loadMonaco();
-  return m.editor.create(container, {
+
+  // Wait for fonts ready supaya measurement Monaco akurat
+  if (document.fonts?.ready) {
+    try {
+      await document.fonts.ready;
+    } catch {
+      // fall through
+    }
+  }
+
+  const editor = m.editor.create(container, {
     value: opts.value ?? '',
     language: opts.language ?? 'plaintext',
     theme: 'vs-dark',
@@ -61,6 +77,21 @@ export async function createEditor(container: HTMLElement, opts: MonacoEditorOpt
     lineNumbers: opts.lineNumbers ?? 'off',
     readOnly: opts.readOnly ?? false
   });
+
+  // Force re-layout setelah render — parent CSS animation bisa bikin
+  // measurement awal salah. Retry beberapa kali biar cursor align dengan text.
+  const triggerLayout = () => {
+    try {
+      editor.layout();
+    } catch {
+      // ignore
+    }
+  };
+  setTimeout(triggerLayout, 50);
+  setTimeout(triggerLayout, 250);
+  setTimeout(triggerLayout, 600);
+
+  return editor;
 }
 
 /**
