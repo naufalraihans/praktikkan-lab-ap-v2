@@ -2703,6 +2703,56 @@ button {
 }
 
 /* ============================================================================
+ * V2 additions — markdown-body math + code overflow handling
+ * (math equations bisa lebih lebar dari container → kasih horizontal scroll)
+ * ============================================================================ */
+.markdown-body {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+.markdown-body mjx-container,
+.markdown-body .MathJax,
+.markdown-body .katex-display {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.25rem 0;
+}
+.markdown-body mjx-container[display="true"],
+.markdown-body .katex-display {
+  margin: 0.6rem 0;
+  text-align: center;
+}
+.markdown-body code {
+  word-break: break-word;
+  white-space: pre-wrap;
+  font-size: 0.85em;
+  padding: 0.1rem 0.4rem;
+}
+.markdown-body pre {
+  overflow-x: auto;
+  max-width: 100%;
+}
+.markdown-body pre code {
+  white-space: pre;
+  word-break: normal;
+}
+/* Nomor list di soal lebih readable — kasih gap */
+.markdown-body ol > li,
+.markdown-body ul > li {
+  margin-bottom: 0.45rem;
+}
+/* Terminal block (```output) jangan overflow */
+.terminal-block {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.terminal-body {
+  overflow-x: auto;
+  white-space: pre;
+}
+
+/* ============================================================================
  * V2 additions — anchor buttons (SvelteKit pakai <a> untuk routing)
  * ============================================================================ */
 a.primary-btn,
