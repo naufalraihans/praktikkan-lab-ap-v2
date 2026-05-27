@@ -5,7 +5,7 @@
   import { authState } from '$lib/stores/auth.svelte';
   import { toast } from '$lib/stores/toast.svelte';
   import { logActivity } from '$lib/utils/activity-log';
-  import Navbar from '$lib/components/Navbar.svelte';
+  import AdminLayout from '$lib/components/AdminLayout.svelte';
   import type { RubrikConfig, QuestionLevel } from '$lib/firebase/types';
 
   type TabId = 'pretest' | 'posttest' | 'sub_criteria';
@@ -156,9 +156,7 @@
   }
 </script>
 
-<Navbar title="ADMIN PANEL" />
-
-<main class="dashboard-content">
+<AdminLayout title="Rubrik Penilaian">
   <section class="admin-section animate-fade-in">
     <div class="section-header">
       <h2>📊 Rubrik Penilaian</h2>
@@ -271,4 +269,4 @@
       {/if}
     {/if}
   </section>
-</main>
+</AdminLayout>

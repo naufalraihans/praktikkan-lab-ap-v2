@@ -14,7 +14,7 @@
   import { authState } from '$lib/stores/auth.svelte';
   import { toast } from '$lib/stores/toast.svelte';
   import { logActivity } from '$lib/utils/activity-log';
-  import Navbar from '$lib/components/Navbar.svelte';
+  import AdminLayout from '$lib/components/AdminLayout.svelte';
   import type { Jawaban, ModulId, QuizType } from '$lib/firebase/types';
 
   type FilterType = 'all' | QuizType;
@@ -205,9 +205,7 @@
   }
 </script>
 
-<Navbar title="ADMIN PANEL" />
-
-<main class="dashboard-content">
+<AdminLayout title="Rekap Jawaban">
   <section class="admin-section animate-fade-in">
     <div class="section-header">
       <h2>📋 Rekap Jawaban</h2>
@@ -352,7 +350,7 @@
       {/each}
     {/if}
   </section>
-</main>
+</AdminLayout>
 
 <!-- Detail Modal -->
 {#if detailOpen && detailData}

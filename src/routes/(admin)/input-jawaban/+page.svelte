@@ -6,7 +6,7 @@
   import { toast } from '$lib/stores/toast.svelte';
   import { logActivity } from '$lib/utils/activity-log';
   import { createEditor, renderMathJax } from '$lib/utils/monaco';
-  import Navbar from '$lib/components/Navbar.svelte';
+  import AdminLayout from '$lib/components/AdminLayout.svelte';
   import type {
     Mahasiswa,
     ModulId,
@@ -372,9 +372,7 @@
   }
 </script>
 
-<Navbar title="ADMIN PANEL" />
-
-<main class="dashboard-content">
+<AdminLayout title="Input Jawaban">
   <section class="admin-section animate-fade-in">
     <div class="section-header">
       <h2>✍️ Input Jawaban (Admin)</h2>
@@ -672,4 +670,4 @@
       </div>
     {/if}
   </section>
-</main>
+</AdminLayout>

@@ -21,7 +21,7 @@
     getGithubPat,
     setGithubPat
   } from '$lib/utils/github-upload';
-  import Navbar from '$lib/components/Navbar.svelte';
+  import AdminLayout from '$lib/components/AdminLayout.svelte';
   import MarkdownEditor from '$lib/components/MarkdownEditor.svelte';
   import InstruksiList from '$lib/components/InstruksiList.svelte';
   import type {
@@ -484,9 +484,7 @@
   }
 </script>
 
-<Navbar title="ADMIN PANEL" />
-
-<main class="dashboard-content">
+<AdminLayout title="Manage Soal">
   <section class="admin-section animate-fade-in">
     <div class="section-header">
       <h2>📝 Manage Soal</h2>
@@ -748,7 +746,7 @@
       </div>
     {/if}
   </section>
-</main>
+</AdminLayout>
 
 <!-- Modal -->
 {#if modalOpen}

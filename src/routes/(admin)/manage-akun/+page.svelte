@@ -6,7 +6,7 @@
   import { toast } from '$lib/stores/toast.svelte';
   import { logActivity } from '$lib/utils/activity-log';
   import { deleteUser, resetUserPassword } from '$lib/utils/admin-users';
-  import Navbar from '$lib/components/Navbar.svelte';
+  import AdminLayout from '$lib/components/AdminLayout.svelte';
   import type { Mahasiswa } from '$lib/firebase/types';
 
   let allUsers = $state<Mahasiswa[]>([]);
@@ -334,9 +334,7 @@
   );
 </script>
 
-<Navbar title="ADMIN PANEL" />
-
-<main class="dashboard-content">
+<AdminLayout title="Manage Akun">
   <section class="admin-section animate-fade-in">
     <div class="section-header">
       <h2>👥 Manage Akun Mahasiswa</h2>
@@ -477,7 +475,7 @@
       </div>
     {/if}
   </section>
-</main>
+</AdminLayout>
 
 <!-- Modal: Add/Edit -->
 {#if modalOpen}

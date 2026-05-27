@@ -13,7 +13,7 @@
   import { db } from '$lib/firebase/client';
   import { COLLECTIONS } from '$lib/firebase/constants';
   import { toast } from '$lib/stores/toast.svelte';
-  import Navbar from '$lib/components/Navbar.svelte';
+  import AdminLayout from '$lib/components/AdminLayout.svelte';
   import type { ActivityLog } from '$lib/firebase/types';
 
   const CHUNK_SIZE = 100;
@@ -130,9 +130,7 @@
   });
 </script>
 
-<Navbar title="ADMIN PANEL" />
-
-<main class="dashboard-content">
+<AdminLayout title="System Logs">
   <section class="admin-section animate-fade-in">
     <div class="section-header">
       <h2>📜 System Logs (Aktivitas)</h2>
@@ -251,4 +249,4 @@
       </div>
     {/if}
   </section>
-</main>
+</AdminLayout>

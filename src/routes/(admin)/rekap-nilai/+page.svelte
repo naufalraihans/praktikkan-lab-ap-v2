@@ -3,7 +3,7 @@
   import { db } from '$lib/firebase/client';
   import { COLLECTIONS, MODUL_INFO } from '$lib/firebase/constants';
   import { toast } from '$lib/stores/toast.svelte';
-  import Navbar from '$lib/components/Navbar.svelte';
+  import AdminLayout from '$lib/components/AdminLayout.svelte';
   import type { Mahasiswa, Jawaban, ModulId } from '$lib/firebase/types';
 
   // Module yang ditampilkan di rekap (selain uprak).
@@ -119,9 +119,7 @@
   }));
 </script>
 
-<Navbar title="ADMIN PANEL" />
-
-<main class="dashboard-content">
+<AdminLayout title="Rekap Nilai">
   <section class="admin-section animate-fade-in">
     <div class="section-header">
       <h2>📊 Rekap Nilai per Kelas</h2>
@@ -242,4 +240,4 @@
       </div>
     {/if}
   </section>
-</main>
+</AdminLayout>
