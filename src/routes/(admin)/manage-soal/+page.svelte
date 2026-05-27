@@ -492,8 +492,8 @@
     </div>
 
     <!-- Tabs -->
-    <div class="card glass-panel" style="margin-bottom:1rem;">
-      <div class="card-body" style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+    <div class="dash-card" style="margin-bottom:1rem;">
+      <div class="dash-card-body" style="display:flex; gap:0.5rem; flex-wrap:wrap;">
         {#each ['pretest', 'posttest', 'keterampilan', 'ujian_praktik'] as const as t (t)}
           <button
             class="tab-btn"
@@ -507,8 +507,8 @@
     </div>
 
     <!-- Modul + GitHub PAT -->
-    <div class="card glass-panel" style="margin-bottom:1rem;">
-      <div class="card-body" style="display:flex; gap:1rem; flex-wrap:wrap; align-items:center;">
+    <div class="dash-card" style="margin-bottom:1rem;">
+      <div class="dash-card-body" style="display:flex; gap:1rem; flex-wrap:wrap; align-items:center;">
         <label for="select-modul" style="color:var(--text-muted);">Modul:</label>
         <select id="select-modul" class="select-input select-small" bind:value={currentModul}>
           {#each REGULER_MODULS as m (m)}
@@ -546,16 +546,16 @@
       <div bind:this={cardsContainer}>
         {#if currentTipe === 'pretest' || currentTipe === 'posttest'}
           {#if quizQuestions.length === 0}
-            <div class="card glass-panel" style="text-align:center; padding:3rem;">
+            <div class="dash-card" style="text-align:center; padding:3rem;">
               <p class="text-muted">Belum ada soal {currentTipe} untuk {MODUL_INFO[currentModul as ModulId]?.display_name ?? currentModul}.</p>
             </div>
           {:else}
             <div style="display:grid; gap:1rem;">
               {#each quizQuestions as q, i (i)}
                 {@const isHard = q.level === 'hard' && q.instruksi && q.instruksi.length > 0}
-                <div class="card glass-panel">
+                <div class="dash-card">
                   <div
-                    class="card-header"
+                    class="dash-card-header"
                     style="display:flex; justify-content:space-between; align-items:center;"
                   >
                     <div style="display:flex; gap:0.5rem; align-items:center;">
@@ -574,7 +574,7 @@
                       >
                     </div>
                   </div>
-                  <div class="card-body">
+                  <div class="dash-card-body">
                     {#if isHard}
                       <div class="markdown-body">{@html renderMarkdownToHtml(q.deskripsi)}</div>
                       <ol style="margin-top:0.5rem; padding-left:1.5rem;">
@@ -604,7 +604,7 @@
         {:else if currentTipe === 'keterampilan'}
           <!-- Judul Program -->
           <div
-            class="card glass-panel"
+            class="dash-card"
             style="margin-bottom:1rem; padding:1rem 1.25rem; display:flex; align-items:center; gap:1rem; flex-wrap:wrap;"
           >
             <div style="flex:1;">
@@ -627,8 +627,8 @@
           </div>
 
           {#if judulEditOpen}
-            <div class="card glass-panel" style="margin-bottom:1rem;">
-              <div class="card-body" style="display:flex; gap:0.75rem; align-items:center;">
+            <div class="dash-card" style="margin-bottom:1rem;">
+              <div class="dash-card-body" style="display:flex; gap:0.75rem; align-items:center;">
                 <input
                   type="text"
                   class="text-input"
@@ -643,15 +643,15 @@
           {/if}
 
           {#if ketItems.length === 0}
-            <div class="card glass-panel" style="text-align:center; padding:3rem;">
+            <div class="dash-card" style="text-align:center; padding:3rem;">
               <p class="text-muted">Belum ada item keterampilan.</p>
             </div>
           {:else}
             <div style="display:grid; gap:1rem;">
               {#each ketItems as item, i (i)}
-                <div class="card glass-panel">
+                <div class="dash-card">
                   <div
-                    class="card-header"
+                    class="dash-card-header"
                     style="display:flex; justify-content:space-between; align-items:center;"
                   >
                     <span class="badge">{item.poin} poin</span>
@@ -663,7 +663,7 @@
                       >
                     </div>
                   </div>
-                  <div class="card-body">
+                  <div class="dash-card-body">
                     <div class="markdown-body">{@html renderMarkdownToHtml(item.referensi)}</div>
                     <p
                       class="text-muted"
@@ -678,7 +678,7 @@
           {/if}
         {:else if currentTipe === 'ujian_praktik'}
           {#if uprakSoal.length === 0}
-            <div class="card glass-panel" style="text-align:center; padding:3rem;">
+            <div class="dash-card" style="text-align:center; padding:3rem;">
               <p class="text-muted">
                 Belum ada soal ujian praktik untuk {currentModul === 'flowchart'
                   ? 'Flowchart'
@@ -689,9 +689,9 @@
             <div style="display:grid; gap:1rem;">
               {#each uprakSoal as s (s._id)}
                 {@const isFlowchart = s.legacy_origin === 'flowchart'}
-                <div class="card glass-panel">
+                <div class="dash-card">
                   <div
-                    class="card-header"
+                    class="dash-card-header"
                     style="display:flex; justify-content:space-between; align-items:center;"
                   >
                     {#if isFlowchart}
@@ -716,7 +716,7 @@
                       >
                     </div>
                   </div>
-                  <div class="card-body">
+                  <div class="dash-card-body">
                     <div class="markdown-body">{@html renderMarkdownToHtml(s.deskripsi)}</div>
                     {#if s.gambar}
                       <img
@@ -758,10 +758,10 @@
     role="presentation"
   >
     <div class="modal-content card glass-panel" style="max-width:900px;">
-      <div class="card-header">
+      <div class="dash-card-header">
         <h3>{modalTitle}</h3>
       </div>
-      <div class="card-body" style="max-height:70vh; overflow-y:auto;">
+      <div class="dash-card-body" style="max-height:70vh; overflow-y:auto;">
         {#if currentTipe === 'pretest' || currentTipe === 'posttest'}
           {#if !fHardMode}
             <div class="input-group">

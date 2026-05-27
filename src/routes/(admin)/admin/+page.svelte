@@ -401,8 +401,8 @@
     </div>
 
     <!-- Current Session Info -->
-    <div class="card glass-panel" style="margin-bottom:1rem;">
-      <div class="card-header">
+    <div class="dash-card" style="margin-bottom:1rem;">
+      <div class="dash-card-header">
         <h3>Status Sesi Saat Ini</h3>
         <span
           class="status-badge {currentSesi ? 'status-active' : 'status-inactive'}"
@@ -412,11 +412,11 @@
         </span>
       </div>
       {#if loadingSesi}
-        <div class="card-body" style="text-align:center;">
+        <div class="dash-card-body" style="text-align:center;">
           <div class="spinner" style="width:24px;height:24px;border-width:2px; margin:0 auto;"></div>
         </div>
       {:else if currentSesi}
-        <div class="card-body">
+        <div class="dash-card-body">
           <div class="info-row">
             <span class="label">Modul</span>
             <span class="value">{MODUL_INFO[currentSesi.modul_id].display_name}</span>
@@ -443,7 +443,7 @@
           </div>
         </div>
       {:else}
-        <div class="card-body">
+        <div class="dash-card-body">
           <p class="text-muted">Belum ada sesi yang diaktifkan.</p>
         </div>
       {/if}
@@ -451,21 +451,27 @@
 
     <!-- Akses Controls -->
     {#if currentSesi}
-      <div class="card glass-panel" style="margin-bottom:1rem;">
-        <div class="card-header">
+      <div class="dash-card" style="margin-bottom:1rem;">
+        <div class="dash-card-header">
           <h3>🔓 Akses Mahasiswa</h3>
         </div>
-        <div class="card-body" style="display:flex; gap:1rem; flex-wrap:wrap; align-items:center;">
-          <label style="display:flex; gap:0.5rem; align-items:center;">
-            <input type="checkbox" bind:checked={aksesPretest} /> Pre-test
+        <div class="dash-card-body" style="display:flex; gap:1rem; flex-wrap:wrap; align-items:center;">
+          <label class="toggle-label">
+            <span>Pre-test</span>
+            <input type="checkbox" class="toggle-input" bind:checked={aksesPretest} />
+            <span class="toggle-slider"></span>
           </label>
-          <label style="display:flex; gap:0.5rem; align-items:center;">
-            <input type="checkbox" bind:checked={aksesPosttest} /> Post-test
+          <label class="toggle-label">
+            <span>Post-test</span>
+            <input type="checkbox" class="toggle-input" bind:checked={aksesPosttest} />
+            <span class="toggle-slider"></span>
           </label>
-          <label style="display:flex; gap:0.5rem; align-items:center;">
-            <input type="checkbox" bind:checked={aksesKeterampilan} /> Keterampilan
+          <label class="toggle-label">
+            <span>Keterampilan</span>
+            <input type="checkbox" class="toggle-input" bind:checked={aksesKeterampilan} />
+            <span class="toggle-slider"></span>
           </label>
-          <button class="primary-btn" disabled={savingAkses} onclick={saveAksesReguler}>
+          <button class="primary-btn" style="margin-left:auto;" disabled={savingAkses} onclick={saveAksesReguler}>
             <span class="btn-text" class:loader-hidden={savingAkses}>Simpan Akses</span>
             <div
               class="spinner"
@@ -478,11 +484,11 @@
     {/if}
 
     <!-- Generate New Session -->
-    <div class="card glass-panel">
-      <div class="card-header">
+    <div class="dash-card">
+      <div class="dash-card-header">
         <h3>✨ Generate Sesi Baru</h3>
       </div>
-      <div class="card-body" style="display:flex; gap:1rem; flex-wrap:wrap; align-items:center;">
+      <div class="dash-card-body" style="display:flex; gap:1rem; flex-wrap:wrap; align-items:center;">
         <label for="select-modul" style="color:var(--text-muted);">Modul:</label>
         <select id="select-modul" class="select-input select-small" bind:value={selectedModul}>
           {#each REGULER_MODULS as m (m)}
@@ -509,7 +515,7 @@
         {/if}
       </div>
       {#if generatedReguler}
-        <div class="card-body" style="border-top: 1px solid rgba(255,255,255,0.1);">
+        <div class="dash-card-body" style="border-top: 1px solid rgba(255,255,255,0.1);">
           <p class="text-muted" style="margin-bottom:0.5rem;">Preview soal yang akan diaktifkan:</p>
           <div style="display:grid; gap:0.5rem; grid-template-columns:repeat(auto-fit, minmax(200px,1fr));">
             <div class="info-row">
@@ -536,8 +542,8 @@
       <h2>🎯 Sesi Ujian Praktik</h2>
     </div>
 
-    <div class="card glass-panel" style="margin-bottom:1rem;">
-      <div class="card-header">
+    <div class="dash-card" style="margin-bottom:1rem;">
+      <div class="dash-card-header">
         <h3>Status Sesi UP</h3>
         <span
           class="status-badge {currentSesiUP ? 'status-active' : 'status-inactive'}"
@@ -547,11 +553,11 @@
         </span>
       </div>
       {#if loadingSesiUP}
-        <div class="card-body" style="text-align:center;">
+        <div class="dash-card-body" style="text-align:center;">
           <div class="spinner" style="width:24px;height:24px;border-width:2px; margin:0 auto;"></div>
         </div>
       {:else if currentSesiUP}
-        <div class="card-body">
+        <div class="dash-card-body">
           <div class="info-row">
             <span class="label">Token</span>
             <span class="value" style="display:flex; gap:0.5rem; align-items:center;">
@@ -578,22 +584,24 @@
           </div>
         </div>
       {:else}
-        <div class="card-body">
+        <div class="dash-card-body">
           <p class="text-muted">Belum ada sesi ujian praktik yang diaktifkan.</p>
         </div>
       {/if}
     </div>
 
     {#if currentSesiUP}
-      <div class="card glass-panel" style="margin-bottom:1rem;">
-        <div class="card-header">
+      <div class="dash-card" style="margin-bottom:1rem;">
+        <div class="dash-card-header">
           <h3>🔓 Akses UP</h3>
         </div>
-        <div class="card-body" style="display:flex; gap:1rem; align-items:center;">
-          <label style="display:flex; gap:0.5rem; align-items:center;">
-            <input type="checkbox" bind:checked={aksesUP} /> Akses UP terbuka
+        <div class="dash-card-body" style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
+          <label class="toggle-label">
+            <span>Ujian Praktik</span>
+            <input type="checkbox" class="toggle-input" bind:checked={aksesUP} />
+            <span class="toggle-slider"></span>
           </label>
-          <button class="primary-btn" disabled={savingAksesUP} onclick={saveAksesUP}>
+          <button class="primary-btn" style="margin-left:auto;" disabled={savingAksesUP} onclick={saveAksesUP}>
             <span class="btn-text" class:loader-hidden={savingAksesUP}>Simpan Akses</span>
             <div
               class="spinner"
@@ -605,11 +613,11 @@
       </div>
     {/if}
 
-    <div class="card glass-panel">
-      <div class="card-header">
+    <div class="dash-card">
+      <div class="dash-card-header">
         <h3>✨ Generate Sesi UP Baru</h3>
       </div>
-      <div class="card-body" style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
+      <div class="dash-card-body" style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
         <button class="primary-btn" disabled={generatingUP} onclick={generateUprakSoal}>
           <span class="btn-text" class:loader-hidden={generatingUP}>🎲 Generate UP</span>
           <div
@@ -636,7 +644,7 @@
         {/if}
       </div>
       {#if generatedUP}
-        <div class="card-body" style="border-top: 1px solid rgba(255,255,255,0.1);">
+        <div class="dash-card-body" style="border-top: 1px solid rgba(255,255,255,0.1);">
           <p class="text-muted" style="margin-bottom:0.5rem;">Preview soal UP:</p>
           <ul style="list-style:none; padding:0; display:grid; gap:0.25rem;">
             {#each generatedUP.soal as s, i (i)}

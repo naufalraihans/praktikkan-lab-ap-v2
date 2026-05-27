@@ -4,11 +4,11 @@
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword
   } from 'firebase/auth';
+  import { goto } from '$app/navigation';
   import { auth, db, emailFromNim } from '$lib/firebase/client';
-  import { COLLECTIONS, MODUL_INFO, MODUL_IDS } from '$lib/firebase/constants';
+  import { COLLECTIONS } from '$lib/firebase/constants';
   import { authState } from '$lib/stores/auth.svelte';
   import { toast } from '$lib/stores/toast.svelte';
-  import Navbar from '$lib/components/Navbar.svelte';
   import type { Mahasiswa } from '$lib/firebase/types';
 
   type View = 'login' | 'set-password' | 'enter-password';
@@ -19,6 +19,13 @@
   let passwordInput = $state('');
   let passwordConfirm = $state('');
   let fetchedMahasiswa = $state<Mahasiswa | null>(null);
+
+  // Admin auto-redirect ke /admin
+  $effect(() => {
+    if (authState.ready && authState.isAdmin) {
+      goto('/admin');
+    }
+  });
 
   async function handleNimSubmit(e: SubmitEvent) {
     e.preventDefault();
@@ -96,183 +103,225 @@
   }
 </script>
 
-<Navbar />
-
-<main class="dashboard-content">
-  {#if !authState.ready}
-    <div class="quiz-state-container">
-      <div class="spinner" style="width:40px;height:40px;border-width:3px;"></div>
-      <p class="text-muted mt-4">Memuat...</p>
+{#if !authState.ready}
+  <div id="app-container">
+    <div class="view-container active">
+      <div class="login-card glass-panel" style="text-align:center;">
+        <div class="spinner" style="width:40px;height:40px;border-width:3px;margin:0 auto;"></div>
+        <p class="text-muted mt-4">Memuat...</p>
+      </div>
     </div>
-  {:else if authState.isLoggedIn && authState.mahasiswa}
-    <!-- HOME VIEW (logged in) -->
-    <section class="animate-fade-in">
-      <header class="quiz-header">
-        <h1>Selamat datang, <span class="highlight">{authState.mahasiswa.nama}</span></h1>
-        <p class="text-muted">
-          {authState.mahasiswa.nim} • {authState.mahasiswa.kelas} •
-          {authState.mahasiswa.role === 'admin' ? 'Administrator' : 'Mahasiswa'}
-        </p>
-      </header>
-
-      <div class="card glass-panel" style="margin-top: 2rem;">
-        <div class="card-header">
-          <h3>📚 Modul Tersedia</h3>
-        </div>
-        <div class="card-body">
-          <ul style="list-style: none; padding: 0; display: grid; gap: 0.5rem;">
-            {#each MODUL_IDS as id}
-              <li class="info-row">
-                <span class="label">{MODUL_INFO[id].display_name}</span>
-                <span class="value text-muted">{id}</span>
-              </li>
-            {/each}
-          </ul>
-        </div>
+  </div>
+{:else if authState.isLoggedIn && authState.mahasiswa && !authState.isAdmin}
+  <!-- ====== HOME / LOBBY (STUDENT) ====== -->
+  <div id="app-container">
+    <div class="view-container active">
+      <div class="home-decor">
+        <div class="laser-line laser-1"></div>
+        <div class="laser-line laser-2"></div>
+        <div class="laser-line laser-3"></div>
       </div>
 
-      {#if authState.isAdmin}
-        <div class="card glass-panel" style="margin-top: 1rem;">
-          <div class="card-header">
-            <h3>🛠 Admin Tools</h3>
-          </div>
-          <div class="card-body">
-            <div
-              style="display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));"
-            >
-              <a href="/logs" class="primary-btn" style="text-align: center;">System Logs</a>
-              <a href="/rubrik" class="primary-btn" style="text-align: center;">Rubrik</a>
-              <a href="/rekap-nilai" class="primary-btn" style="text-align: center;">Rekap Nilai</a>
-              <a href="/admin" class="primary-btn" style="text-align: center;">Dashboard</a>
-              <a href="/manage-akun" class="primary-btn" style="text-align: center;">Manage Akun</a>
-              <a href="/input-jawaban" class="primary-btn" style="text-align: center;">Input Jawaban</a>
-              <a href="/manage-soal" class="primary-btn" style="text-align: center;">Manage Soal</a>
-              <a href="/rekap" class="primary-btn" style="text-align: center;">Rekap Jawaban</a>
-            </div>
+      <nav class="navbar glass-panel">
+        <div class="nav-brand">
+          <img src="/logoLab.png" alt="Lab-AP Logo" class="brand-logo-small" />
+          <div class="brand-text">
+            <span class="brand-title">LABORATORIUM</span>
+            <span class="brand-subtitle">algoritma dan pemrograman</span>
           </div>
         </div>
-      {:else}
-        <div class="card glass-panel" style="margin-top: 1rem;">
-          <div class="card-header">
-            <h3>📝 Aktivitas</h3>
+        <div class="nav-actions">
+          <div class="user-chip">
+            <span class="dot"></span>
+            <span>{authState.mahasiswa.nama}</span>
           </div>
-          <div class="card-body">
-            <div
-              style="display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));"
+          <button
+            class="secondary-btn"
+            onclick={async () => {
+              const { signOut } = await import('firebase/auth');
+              await signOut(auth);
+              toast.show('Logout berhasil', 'success');
+            }}
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
             >
-              <a href="/pretest" class="primary-btn" style="text-align: center;">Pre-test</a>
-              <a href="/posttest" class="primary-btn" style="text-align: center;">Post-test</a>
-              <a href="/keterampilan" class="primary-btn" style="text-align: center;"
-                >Keterampilan</a
-              >
-              <a href="/ujian" class="primary-btn" style="text-align: center;">Ujian Praktik</a>
-            </div>
-          </div>
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            Logout
+          </button>
         </div>
-      {/if}
+      </nav>
 
-      <div class="card glass-panel" style="margin-top: 1rem;">
-        <div class="card-header">
-          <h3>🛠 Status</h3>
-        </div>
-        <div class="card-body">
-          <p class="text-muted">
-            SvelteKit v2 — masih in-progress. DB udah di-migrate ke <code>*_v2</code>. Page lain
-            menyusul.
+      <main class="dashboard-content">
+        <header class="dashboard-header animate-fade-in">
+          <h1>
+            Selamat datang, <span class="highlight">{authState.mahasiswa.nama}</span>!
+          </h1>
+          <p>
+            Anda berhasil masuk ke halaman utama Laboratorium Algoritma dan Pemrograman.
           </p>
+        </header>
+
+        <div class="dashboard-grid">
+          <div class="card glass-panel animate-fade-in-delayed">
+            <div class="card-header">
+              <h3>Data Mahasiswa</h3>
+            </div>
+            <div class="card-body">
+              <div class="info-row">
+                <span class="label">Nama Lengkap</span>
+                <span class="value">{authState.mahasiswa.nama}</span>
+              </div>
+              <div class="info-row">
+                <span class="label">Nomor Induk Mahasiswa (NIM)</span>
+                <span class="value">{authState.mahasiswa.nim}</span>
+              </div>
+              <div class="info-row">
+                <span class="label">Kelas</span>
+                <span class="value badge">{authState.mahasiswa.kelas}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card glass-panel abstract-decor animate-fade-in-delayed-more">
+            <div class="decor-circle"></div>
+            <div class="card-content">
+              <h3>Siap Praktikum?</h3>
+              <p>
+                Pastikan Anda sudah mengekstrak tugas dan menyiapkan modul sebelum memulai sesi hari
+                ini.
+              </p>
+              <div
+                style="display:grid; gap:0.5rem; grid-template-columns: repeat(2, 1fr); margin-top:1.25rem;"
+              >
+                <a href="/pretest" class="primary-btn" style="text-align:center;">Pre-test</a>
+                <a href="/posttest" class="primary-btn" style="text-align:center;">Post-test</a>
+                <a href="/keterampilan" class="primary-btn" style="text-align:center;"
+                  >Keterampilan</a
+                >
+                <a href="/ujian" class="primary-btn" style="text-align:center;">Ujian Praktik</a>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </section>
-  {:else}
-    <!-- LOGIN FLOW -->
-    <div class="auth-container">
+      </main>
+    </div>
+  </div>
+{:else}
+  <!-- ====== LOGIN VIEWS ====== -->
+  <div id="app-container">
+    <div class="view-container active">
+      <div class="glow-orb orb-1"></div>
+      <div class="glow-orb orb-2"></div>
+
       {#if view === 'login'}
-        <div class="card glass-panel" style="max-width: 420px; margin: 4rem auto; padding: 2rem;">
-          <h2>Masuk</h2>
-          <p class="text-muted mt-4">Masukkan NIM untuk melanjutkan</p>
-          <form onsubmit={handleNimSubmit} style="margin-top: 1.5rem;">
-            <input
-              type="text"
-              class="text-input"
-              placeholder="NIM"
-              bind:value={nimInput}
-              disabled={loading}
-              required
-              style="width: 100%; margin-bottom: 1rem;"
-            />
-            <button type="submit" class="primary-btn" disabled={loading} style="width: 100%;">
-              {loading ? 'Memeriksa...' : 'Lanjut'}
+        <div class="login-card glass-panel">
+          <div class="logo-container">
+            <img src="/logoLab.png" alt="Lab-AP Logo" class="brand-logo-large" />
+            <h1>Lab-AP</h1>
+          </div>
+          <h2>Selamat Datang</h2>
+          <p class="subtitle">Silakan masukkan NIM Anda untuk masuk.</p>
+
+          <form onsubmit={handleNimSubmit}>
+            <div class="input-group">
+              <label for="nim-input">NIM Mahasiswa</label>
+              <input
+                id="nim-input"
+                type="text"
+                placeholder="Masukkan NIM"
+                autocomplete="off"
+                required
+                bind:value={nimInput}
+              />
+            </div>
+            <button type="submit" class="primary-btn" disabled={loading}>
+              <span class="btn-text" class:loader-hidden={loading}>Lanjut</span>
+              <div class="spinner" class:loader-hidden={!loading}></div>
             </button>
           </form>
         </div>
       {:else if view === 'set-password'}
-        <div class="card glass-panel" style="max-width: 420px; margin: 4rem auto; padding: 2rem;">
+        <div class="login-card glass-panel">
+          <div class="logo-container">
+            <img src="/logoLab.png" alt="Lab-AP Logo" class="brand-logo-large" />
+            <h1>Lab-AP</h1>
+          </div>
           <h2>Buat Password</h2>
-          <p class="text-muted mt-4">
-            NIM {nimInput} terdaftar. Buat password baru.
-          </p>
-          <form onsubmit={handleSetPassword} style="margin-top: 1.5rem;">
-            <input
-              type="password"
-              class="text-input"
-              placeholder="Password baru (min 6 karakter)"
-              bind:value={passwordInput}
-              disabled={loading}
-              required
-              style="width: 100%; margin-bottom: 1rem;"
-            />
-            <input
-              type="password"
-              class="text-input"
-              placeholder="Konfirmasi password"
-              bind:value={passwordConfirm}
-              disabled={loading}
-              required
-              style="width: 100%; margin-bottom: 1rem;"
-            />
-            <button type="submit" class="primary-btn" disabled={loading} style="width: 100%;">
-              {loading ? 'Memproses...' : 'Daftar & Masuk'}
+          <p class="subtitle">Akun Anda belum memiliki password. Silakan buat password baru.</p>
+
+          <form onsubmit={handleSetPassword}>
+            <div class="input-group">
+              <label for="new-password">Password Baru</label>
+              <input
+                id="new-password"
+                type="password"
+                placeholder="Masukkan password"
+                required
+                bind:value={passwordInput}
+              />
+            </div>
+            <div class="input-group">
+              <label for="confirm-password">Konfirmasi Password</label>
+              <input
+                id="confirm-password"
+                type="password"
+                placeholder="Ulangi password"
+                required
+                bind:value={passwordConfirm}
+              />
+            </div>
+            <button type="submit" class="primary-btn" disabled={loading}>
+              <span class="btn-text" class:loader-hidden={loading}>Simpan & Masuk</span>
+              <div class="spinner" class:loader-hidden={!loading}></div>
             </button>
-            <button
-              type="button"
-              class="secondary-btn"
-              onclick={resetFlow}
-              style="width: 100%; margin-top: 0.5rem;"
-            >
+            <button type="button" class="secondary-btn mt-4 w-100" onclick={resetFlow}>
               Kembali
             </button>
           </form>
         </div>
       {:else}
-        <div class="card glass-panel" style="max-width: 420px; margin: 4rem auto; padding: 2rem;">
+        <div class="login-card glass-panel">
+          <div class="logo-container">
+            <img src="/logoLab.png" alt="Lab-AP Logo" class="brand-logo-large" />
+            <h1>Lab-AP</h1>
+          </div>
           <h2>Masukkan Password</h2>
-          <p class="text-muted mt-4">
-            {fetchedMahasiswa?.nama} — {nimInput}
+          <p class="subtitle">
+            NIM ditemukan{fetchedMahasiswa ? ` — ${fetchedMahasiswa.nama}` : ''}. Masukkan password Anda.
           </p>
-          <form onsubmit={handleLogin} style="margin-top: 1.5rem;">
-            <input
-              type="password"
-              class="text-input"
-              placeholder="Password"
-              bind:value={passwordInput}
-              disabled={loading}
-              required
-              style="width: 100%; margin-bottom: 1rem;"
-            />
-            <button type="submit" class="primary-btn" disabled={loading} style="width: 100%;">
-              {loading ? 'Memproses...' : 'Masuk'}
+
+          <form onsubmit={handleLogin}>
+            <div class="input-group">
+              <label for="login-password">Password</label>
+              <input
+                id="login-password"
+                type="password"
+                placeholder="Masukkan Password"
+                required
+                bind:value={passwordInput}
+              />
+            </div>
+            <button type="submit" class="primary-btn" disabled={loading}>
+              <span class="btn-text" class:loader-hidden={loading}>Masuk Portal</span>
+              <div class="spinner" class:loader-hidden={!loading}></div>
             </button>
-            <button
-              type="button"
-              class="secondary-btn"
-              onclick={resetFlow}
-              style="width: 100%; margin-top: 0.5rem;"
-            >
+            <button type="button" class="secondary-btn mt-4 w-100" onclick={resetFlow}>
               Ganti NIM
             </button>
           </form>
         </div>
       {/if}
     </div>
-  {/if}
-</main>
+  </div>
+{/if}

@@ -345,8 +345,8 @@
     </div>
 
     <!-- Filter Bar -->
-    <div class="card glass-panel" style="margin-bottom:1.5rem;">
-      <div class="card-body" style="display:flex; gap:1rem; flex-wrap:wrap; align-items:center;">
+    <div class="dash-card" style="margin-bottom:1.5rem;">
+      <div class="dash-card-body" style="display:flex; gap:1rem; flex-wrap:wrap; align-items:center;">
         <input
           type="text"
           class="text-input"
@@ -381,7 +381,7 @@
     <!-- Bulk action bar -->
     {#if selectedNims.size > 0}
       <div
-        class="card glass-panel"
+        class="dash-card"
         style="margin-bottom:1rem; padding: 0.75rem 1rem; display:flex; align-items:center; gap:1rem;"
       >
         <span><strong>{selectedNims.size}</strong> dipilih</span>
@@ -404,12 +404,12 @@
         <p class="text-muted mt-4">Memuat data akun...</p>
       </div>
     {:else if filtered.length === 0}
-      <div class="card glass-panel" style="text-align:center; padding:4rem 2rem;">
+      <div class="dash-card" style="text-align:center; padding:4rem 2rem;">
         <div style="font-size:3rem; margin-bottom:1rem; opacity:0.5;">📂</div>
         <p class="text-muted">Tidak ada akun yang sesuai filter.</p>
       </div>
     {:else}
-      <div class="card glass-panel">
+      <div class="dash-card">
         <div style="overflow-x:auto;">
           <table class="rekap-table" style="width:100%;">
             <thead>
@@ -487,10 +487,10 @@
     role="presentation"
   >
     <div class="modal-content card glass-panel" style="max-width:500px;">
-      <div class="card-header">
+      <div class="dash-card-header">
         <h3>{editingNim ? '✏️ Edit Mahasiswa' : '+ Tambah Akun'}</h3>
       </div>
-      <div class="card-body">
+      <div class="dash-card-body">
         <div class="input-group">
           <label for="f-nim">NIM</label>
           <input
@@ -540,10 +540,10 @@
     role="presentation"
   >
     <div class="modal-content card glass-panel" style="max-width:500px;">
-      <div class="card-header">
+      <div class="dash-card-header">
         <h3>🔑 Reset Password</h3>
       </div>
-      <div class="card-body">
+      <div class="dash-card-body">
         <p class="text-muted">
           Reset password untuk <strong>{resetTargetName}</strong> ({resetTargetNim})
         </p>
@@ -591,10 +591,10 @@
     role="presentation"
   >
     <div class="modal-content card glass-panel" style="max-width:700px;">
-      <div class="card-header">
+      <div class="dash-card-header">
         <h3>📂 Import CSV</h3>
       </div>
-      <div class="card-body">
+      <div class="dash-card-body">
         {#if csvRows.length === 0}
           <p class="text-muted" style="margin-bottom:1rem;">
             Format CSV: <code>NIM;NAMA;KELAS</code> (semicolon-separated, baris 1 = header).

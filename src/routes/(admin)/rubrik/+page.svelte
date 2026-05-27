@@ -185,8 +185,8 @@
       </div>
     {:else}
       <!-- Tabs -->
-      <div class="card glass-panel" style="margin-bottom:1rem;">
-        <div class="card-body" style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+      <div class="dash-card" style="margin-bottom:1rem;">
+        <div class="dash-card-body" style="display:flex; gap:0.5rem; flex-wrap:wrap;">
           {#each ['pretest', 'posttest', 'sub_criteria'] as const as t (t)}
             <button
               class="tab-btn {activeTab === t ? 'active' : ''}"
@@ -202,8 +202,8 @@
       {#if activeTab === 'pretest' || activeTab === 'posttest'}
         {@const tab = activeTab}
         {@const section = rubrik[tab]}
-        <div class="card glass-panel">
-          <div class="card-body">
+        <div class="dash-card">
+          <div class="dash-card-body">
             {#each Object.entries(section) as [level, kategoriMap] (level)}
               {@const cfg = LEVEL_LABEL[level as QuestionLevel] ?? { label: level, class: '' }}
               <div class="rubrik-level-block">
@@ -242,7 +242,7 @@
           {#each SC_CARDS as card (card.key)}
             {@const data = rubrik.sub_criteria[card.key] as unknown as Record<string, number>}
             <div class="card glass-panel sc-card">
-              <div class="card-body">
+              <div class="dash-card-body">
                 <h4>{card.title}</h4>
                 {#each Object.keys(data) as fieldKey (fieldKey)}
                   <div class="sc-row">

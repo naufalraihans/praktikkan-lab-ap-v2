@@ -384,8 +384,8 @@
         <p class="text-muted mt-4">Memuat data mahasiswa...</p>
       </div>
     {:else if step === 'config'}
-      <div class="card glass-panel">
-        <div class="card-body" style="display:grid; gap:1rem;">
+      <div class="dash-card">
+        <div class="dash-card-body" style="display:grid; gap:1rem;">
           <div class="input-group">
             <label for="select-kelas">Kelas</label>
             <select id="select-kelas" class="select-input" bind:value={selectedKelas}>
@@ -463,8 +463,8 @@
         </div>
       </div>
     {:else if step === 'pick'}
-      <div class="card glass-panel" style="margin-bottom:1rem;">
-        <div class="card-body">
+      <div class="dash-card" style="margin-bottom:1rem;">
+        <div class="dash-card-body">
           <p>
             📚 Pilih soal <strong>{selectedType}</strong> — <strong
               >{MODUL_INFO[selectedModul].display_name}</strong
@@ -508,7 +508,7 @@
                 {@const checked = pickedIndices.has(i)}
                 {@const disabled = isLevelAtLimit(lv, checked)}
                 <label
-                  class="card glass-panel"
+                  class="dash-card"
                   style="cursor:{disabled ? 'not-allowed' : 'pointer'}; opacity: {disabled
                     ? '0.4'
                     : '1'}; padding:0.75rem 1rem; display:flex; gap:0.75rem; align-items:flex-start; {checked
@@ -540,8 +540,8 @@
         {/if}
       {/each}
     {:else if step === 'input'}
-      <div class="card glass-panel" style="margin-bottom:1rem;">
-        <div class="card-body">
+      <div class="dash-card" style="margin-bottom:1rem;">
+        <div class="dash-card-body">
           <p>
             📝 Input jawaban <strong>{selectedType}</strong> —
             <strong>{MODUL_INFO[selectedModul].display_name}</strong>
@@ -569,7 +569,7 @@
         {#each currentSoalList as q, i (i)}
           {@const isHard = q.level === 'hard' && q.instruksi && q.instruksi.length > 0}
           <div class="card glass-panel animate-fade-in" style="animation-delay: {i * 0.08}s;">
-            <div class="card-body">
+            <div class="dash-card-body">
               <div style="display:flex; gap:0.5rem; align-items:center; margin-bottom:0.5rem;">
                 <span
                   style="background: rgba(255,255,255,0.1); padding:0.25rem 0.5rem; border-radius:4px; font-weight:600;"
@@ -654,7 +654,7 @@
         </button>
       </div>
     {:else if step === 'success'}
-      <div class="card glass-panel" style="text-align:center; max-width:500px; margin: 4rem auto; padding:2.5rem;">
+      <div class="dash-card" style="text-align:center; max-width:500px; margin: 4rem auto; padding:2.5rem;">
         <div style="font-size:3rem; margin-bottom:1rem;">✅</div>
         <h2 style="color:var(--success);">Jawaban Tersimpan!</h2>
         <p class="text-muted mt-4">

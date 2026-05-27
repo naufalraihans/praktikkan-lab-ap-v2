@@ -125,8 +125,8 @@
       <h2>📊 Rekap Nilai per Kelas</h2>
     </div>
 
-    <div class="card glass-panel" style="margin-bottom:1.5rem;">
-      <div class="card-body" style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
+    <div class="dash-card" style="margin-bottom:1.5rem;">
+      <div class="dash-card-body" style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
         <label for="kelas-select" style="color:var(--text-muted);">Kelas:</label>
         <select
           id="kelas-select"
@@ -169,13 +169,13 @@
         <p class="text-muted mt-4">Memuat data nilai...</p>
       </div>
     {:else if hasLoaded && students.length === 0}
-      <div class="card glass-panel" style="text-align:center; padding:4rem 2rem;">
+      <div class="dash-card" style="text-align:center; padding:4rem 2rem;">
         <div style="font-size:3rem; margin-bottom:1rem; opacity:0.5;">📂</div>
         <h3 style="margin-bottom:0.5rem;">Belum ada data</h3>
         <p class="text-muted">Belum ada jawaban untuk kelas {selectedKelas}.</p>
       </div>
     {:else if hasLoaded}
-      <div class="card glass-panel">
+      <div class="dash-card">
         <div style="overflow-x:auto;">
           <table class="rekap-table" style="width:100%; min-width: 1200px;">
             <thead>

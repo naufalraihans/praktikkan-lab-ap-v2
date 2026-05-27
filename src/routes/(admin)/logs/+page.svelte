@@ -151,8 +151,8 @@
       </div>
     </div>
 
-    <div class="card glass-panel" style="margin-bottom:1.5rem;">
-      <div class="card-body">
+    <div class="dash-card" style="margin-bottom:1.5rem;">
+      <div class="dash-card-body">
         <div style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
           <label for="filter-role" style="color:var(--text-muted);">Filter Role:</label>
           <select
@@ -184,13 +184,13 @@
         <p class="text-muted mt-4">Memuat log aktivitas...</p>
       </div>
     {:else if filtered.length === 0}
-      <div class="card glass-panel" style="text-align:center; padding:4rem 2rem;">
+      <div class="dash-card" style="text-align:center; padding:4rem 2rem;">
         <div style="font-size:3rem; margin-bottom:1rem; opacity:0.5;">📂</div>
         <h3 style="margin-bottom:0.5rem;">Belum ada log</h3>
         <p class="text-muted">Tidak ada aktivitas yang tercatat saat ini.</p>
       </div>
     {:else}
-      <div class="card glass-panel">
+      <div class="dash-card">
         <div style="overflow-x:auto;">
           <table class="rekap-table" style="width:100%;">
             <thead>

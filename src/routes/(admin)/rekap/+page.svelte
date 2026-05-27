@@ -213,8 +213,8 @@
     </div>
 
     <!-- Filter Bar -->
-    <div class="card glass-panel" style="margin-bottom:1rem;">
-      <div class="card-body" style="display:flex; gap:1rem; flex-wrap:wrap; align-items:center;">
+    <div class="dash-card" style="margin-bottom:1rem;">
+      <div class="dash-card-body" style="display:flex; gap:1rem; flex-wrap:wrap; align-items:center;">
         <label for="filter-type" style="color:var(--text-muted);">Jenis:</label>
         <select id="filter-type" class="select-input select-small" bind:value={filterType}>
           <option value="all">Semua</option>
@@ -260,14 +260,14 @@
         <p class="text-muted mt-4">Memuat rekap...</p>
       </div>
     {:else if filtered.length === 0}
-      <div class="card glass-panel" style="text-align:center; padding:4rem 2rem;">
+      <div class="dash-card" style="text-align:center; padding:4rem 2rem;">
         <div style="font-size:3rem; margin-bottom:1rem; opacity:0.5;">📂</div>
         <h3 style="margin-bottom:0.5rem;">Tidak ada data</h3>
         <p class="text-muted">Belum ada jawaban yang cocok dengan filter.</p>
       </div>
     {:else}
       {#each groupedByKelas as [kelas, students] (kelas)}
-        <details class="card glass-panel" style="margin-bottom:1rem;" open>
+        <details class="dash-card" style="margin-bottom:1rem;" open>
           <summary
             style="padding: 0.75rem 1rem; cursor:pointer; display:flex; justify-content:space-between; align-items:center; user-select:none;"
           >
@@ -362,10 +362,10 @@
     role="presentation"
   >
     <div class="modal-content card glass-panel" style="max-width:900px;">
-      <div class="card-header">
+      <div class="dash-card-header">
         <h3>📄 Detail Jawaban</h3>
       </div>
-      <div class="card-body" style="max-height:75vh; overflow-y:auto;">
+      <div class="dash-card-body" style="max-height:75vh; overflow-y:auto;">
         <div class="info-row">
           <span class="label">Nama</span>
           <span class="value">{detailData.snapshot?.nama ?? '-'}</span>
@@ -421,7 +421,7 @@
           }[]}
           {#each answers as a, i (i)}
             <div
-              class="card glass-panel"
+              class="dash-card"
               style="margin-bottom:0.75rem; padding:0.75rem 1rem;"
             >
               <div style="display:flex; gap:0.5rem; align-items:center; margin-bottom:0.5rem;">
@@ -487,10 +487,10 @@
     role="presentation"
   >
     <div class="modal-content card glass-panel" style="max-width:500px;">
-      <div class="card-header">
+      <div class="dash-card-header">
         <h3>📝 Edit Nilai</h3>
       </div>
-      <div class="card-body">
+      <div class="dash-card-body">
         <p class="text-muted">
           {editTarget.snapshot?.nama} ({editTarget.nim}) — {typeLabel(editTarget.type)}
           {MODUL_INFO[editTarget.modul_id]?.display_name ?? editTarget.modul_id}
