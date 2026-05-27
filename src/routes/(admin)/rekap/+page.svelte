@@ -42,6 +42,14 @@
   // Auto-grade state — track per-jawaban grading status
   let gradingIds = $state<Set<string>>(new Set());
 
+  // Bulk select state
+  let selectedIds = $state<Set<string>>(new Set());
+
+  // Bulk grade progress
+  let bulkGrading = $state(false);
+  let bulkProgress = $state({ current: 0, total: 0, name: '', errors: 0 });
+  let bulkDeleting = $state(false);
+
   $effect(() => {
     if (authState.isAdmin) {
       filterType;
@@ -228,6 +236,171 @@
     }
   }
 
+  function toggleSelect(id: string) {
+    if (selectedIds.has(id)) selectedIds.delete(id);
+    else selectedIds.add(id);
+    selectedIds = new Set(selectedIds);
+  }
+
+  function toggleSelectKelas(kelas: string) {
+    const students = groupedByKelas.find(([k]) => k === kelas)?.[1] ?? [];
+    const ids = students.map((s) => s._id);
+    const allSelected = ids.every((id) => selectedIds.has(id));
+    if (allSelected) {
+      for (const id of ids) selectedIds.delete(id);
+    } else {
+      for (const id of ids) selectedIds.add(id);
+    }
+    selectedIds = new Set(selectedIds);
+  }
+
+  function isKelasAllSelected(kelas: string): boolean {
+    const students = groupedByKelas.find(([k]) => k === kelas)?.[1] ?? [];
+    return students.length > 0 && students.every((s) => selectedIds.has(s._id));
+  }
+
+  function clearSelection() {
+    selectedIds = new Set();
+  }
+
+  async function handleBulkGrade() {
+    if (selectedIds.size === 0) return;
+    const toGrade = allJawaban.filter(
+      (j) => selectedIds.has(j._id) && (j.nilai === null || j.nilai === undefined)
+    );
+    const skipped = selectedIds.size - toGrade.length;
+
+    if (toGrade.length === 0) {
+      toast.show(`Semua ${selectedIds.size} jawaban sudah punya nilai`, 'error');
+      return;
+    }
+
+    const msg = `Grade ${toGrade.length} jawaban yang belum dinilai${skipped > 0 ? ` (${skipped} di-skip karena sudah ada nilai)` : ''}. Lanjut?`;
+    if (!confirm(msg)) return;
+
+    bulkGrading = true;
+    bulkProgress = { current: 0, total: toGrade.length, name: '', errors: 0 };
+    let errors = 0;
+
+    for (const j of toGrade) {
+      bulkProgress = {
+        ...bulkProgress,
+        current: bulkProgress.current,
+        name: `${j.snapshot?.nama ?? j.nim} (${j.type})`
+      };
+      try {
+        let result;
+        if (j.type === 'pretest' || j.type === 'posttest') {
+          result = await gradePT(j);
+        } else if (j.type === 'keterampilan') {
+          const soalSnap = await fsGetDoc(doc(db, COLLECTIONS.soal, `${j.modul_id}_keterampilan`));
+          if (!soalSnap.exists()) throw new Error('Rubrik keterampilan tidak ditemukan');
+          const items = (soalSnap.data() as SoalKeterampilan).items;
+          result = await gradeKeterampilan(j, items);
+        } else if (j.type === 'ujian_praktik') {
+          result = await gradeUjianPraktik(j);
+        } else continue;
+
+        await updateDoc(doc(db, COLLECTIONS.jawaban, j._id), {
+          nilai: result.nilai,
+          grading_detail: result.grading_detail
+        });
+      } catch (err) {
+        console.error(`Grade ${j._id} error:`, err);
+        errors++;
+      }
+      bulkProgress = { ...bulkProgress, current: bulkProgress.current + 1, errors };
+    }
+
+    await logActivity({
+      role: 'admin',
+      nim: authState.mahasiswa?.nim ?? null,
+      action: 'admin_bulk_grade',
+      message: `Bulk graded ${toGrade.length - errors}/${toGrade.length} jawaban`
+    });
+
+    bulkGrading = false;
+    selectedIds = new Set();
+    toast.show(
+      `Selesai: ${toGrade.length - errors} berhasil${errors > 0 ? `, ${errors} gagal` : ''}`,
+      errors > 0 ? 'error' : 'success'
+    );
+    await loadRekap();
+  }
+
+  let bulkResetting = $state(false);
+
+  async function handleBulkReset() {
+    if (selectedIds.size === 0) return;
+    const toReset = allJawaban.filter(
+      (j) => selectedIds.has(j._id) && j.nilai !== null && j.nilai !== undefined
+    );
+    if (toReset.length === 0) {
+      toast.show('Semua jawaban yang dipilih belum punya nilai', 'error');
+      return;
+    }
+    const msg = `Reset nilai dari ${toReset.length} jawaban?\n\nNilai akan di-set null sehingga bisa di-grade ulang. Jawaban TIDAK dihapus.\n\nLanjut?`;
+    if (!confirm(msg)) return;
+
+    bulkResetting = true;
+    let success = 0;
+    let errors = 0;
+    for (const j of toReset) {
+      try {
+        await updateDoc(doc(db, COLLECTIONS.jawaban, j._id), {
+          nilai: null,
+          grading_detail: null
+        });
+        success++;
+      } catch (err) {
+        console.error(`Reset ${j._id} error:`, err);
+        errors++;
+      }
+    }
+    await logActivity({
+      role: 'admin',
+      nim: authState.mahasiswa?.nim ?? null,
+      action: 'admin_bulk_reset',
+      message: `Bulk reset nilai pada ${success} jawaban`
+    });
+    bulkResetting = false;
+    selectedIds = new Set();
+    toast.show(
+      `${success} nilai di-reset${errors > 0 ? `, ${errors} gagal` : ''}`,
+      errors > 0 ? 'error' : 'success'
+    );
+    await loadRekap();
+  }
+
+  async function handleBulkDelete() {
+    if (selectedIds.size === 0) return;
+    const count = selectedIds.size;
+    if (!confirm(`Hapus ${count} jawaban? Tidak bisa di-undo!`)) return;
+
+    bulkDeleting = true;
+    let success = 0;
+    let errors = 0;
+    for (const id of Array.from(selectedIds)) {
+      try {
+        await deleteDoc(doc(db, COLLECTIONS.jawaban, id));
+        success++;
+      } catch (err) {
+        console.error(`Delete ${id} error:`, err);
+        errors++;
+      }
+    }
+    await logActivity({
+      role: 'admin',
+      nim: authState.mahasiswa?.nim ?? null,
+      action: 'admin_bulk_delete',
+      message: `Bulk deleted ${success} jawaban`
+    });
+    bulkDeleting = false;
+    selectedIds = new Set();
+    toast.show(`${success} dihapus${errors > 0 ? `, ${errors} gagal` : ''}`, errors > 0 ? 'error' : 'success');
+    await loadRekap();
+  }
+
   async function handleDelete(j: Jawaban & { _id: string }) {
     if (!confirm(`Hapus jawaban ${j.snapshot?.nama ?? j.nim} (${typeLabel(j.type)})?`)) return;
     try {
@@ -302,6 +475,60 @@
       </div>
     {/if}
 
+    <!-- Bulk Action Bar -->
+    {#if selectedIds.size > 0}
+      <div
+        class="dash-card"
+        style="position:sticky; top:0.5rem; z-index:50; margin-bottom:1rem; padding:0.75rem 1rem; display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap; background:rgba(100,5,15,0.15); border-color:rgba(100,5,15,0.4);"
+      >
+        <strong>{selectedIds.size}</strong> dipilih
+        <button
+          class="btn-grade"
+          disabled={bulkGrading || bulkDeleting || bulkResetting}
+          onclick={handleBulkGrade}
+          title="Auto-Grade semua yang dipilih (skip yang sudah ada nilai)"
+          style="margin-left:auto;"
+        >
+          🤖 Grade Terpilih
+        </button>
+        <button
+          class="btn-detail"
+          style="background:rgba(245,158,11,0.15); color:#fbbf24; border-color:rgba(245,158,11,0.3);"
+          disabled={bulkGrading || bulkDeleting || bulkResetting}
+          onclick={handleBulkReset}
+          title="Reset nilai (set null) — bisa di-grade ulang"
+        >
+          🔄 Reset Nilai
+        </button>
+        <button
+          class="btn-detail"
+          style="background:rgba(239,68,68,0.15); color:#ef4444; border-color:rgba(239,68,68,0.3);"
+          disabled={bulkGrading || bulkDeleting || bulkResetting}
+          onclick={handleBulkDelete}
+        >
+          🗑️ Hapus Terpilih
+        </button>
+        <button class="secondary-btn" onclick={clearSelection}>Batal</button>
+      </div>
+    {/if}
+
+    <!-- Bulk Grade Progress -->
+    {#if bulkGrading}
+      <div class="dash-card" style="margin-bottom:1rem; padding:0.75rem 1rem;">
+        <p style="margin:0 0 0.5rem 0;">
+          ⏳ Grading <strong>{bulkProgress.current}/{bulkProgress.total}</strong>
+          {bulkProgress.errors > 0 ? `(${bulkProgress.errors} gagal)` : ''} — {bulkProgress.name}
+        </p>
+        <div style="background:#1e1e1e; height:8px; border-radius:4px; overflow:hidden;">
+          <div
+            style="background:var(--primary); height:100%; width:{bulkProgress.total > 0
+              ? (bulkProgress.current / bulkProgress.total) * 100
+              : 0}%; transition: width 0.2s;"
+          ></div>
+        </div>
+      </div>
+    {/if}
+
     {#if loading}
       <div style="text-align:center; padding:3rem;">
         <div class="spinner" style="width:40px;height:40px;border-width:3px; margin:0 auto;"></div>
@@ -326,6 +553,14 @@
             <table class="rekap-table" style="width:100%;">
               <thead>
                 <tr>
+                  <th class="td-check" style="width:40px;">
+                    <input
+                      type="checkbox"
+                      checked={isKelasAllSelected(kelas)}
+                      onchange={() => toggleSelectKelas(kelas)}
+                      title="Pilih semua di kelas ini"
+                    />
+                  </th>
                   <th>Nama</th>
                   <th>NIM</th>
                   <th>Jenis</th>
@@ -343,7 +578,15 @@
                   {@const akhir = nilaiAkhir(s)}
                   {@const aiGraded =
                     (s.grading_detail as { graded_by?: string } | null)?.graded_by === 'ai'}
-                  <tr>
+                  {@const isSelected = selectedIds.has(s._id)}
+                  <tr class:row-selected={isSelected}>
+                    <td class="td-check">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onchange={() => toggleSelect(s._id)}
+                      />
+                    </td>
                     <td class="td-name">{s.snapshot?.nama ?? s.nim}</td>
                     <td class="td-nim">{s.nim}</td>
                     <td>
