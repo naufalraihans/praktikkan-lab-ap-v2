@@ -1,0 +1,141 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- Helper Functions ---
+    function isAdmin() {
+      return request.auth != null &&
+        get(/databases/$(database)/documents/mahasiswa/$(request.auth.token.email.replace('@mhs.lab-ap.com', ''))).data.role == 'admin';
+    }
+
+    function isOwner(nim) {
+      return request.auth != null && request.auth.token.email == nim + '@mhs.lab-ap.com';
+    }
+
+    // Mahasiswa:
+    // get: allowed so login flow can check isRegistered before auth.
+    // list: only admins can see all mahasiswa.
+    // update: owner can only update specific fields.
+    match /mahasiswa/{nim} {
+      allow get: if true;
+      allow list: if isAdmin();
+      allow update: if isOwner(nim)
+        && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['isRegistered', 'registeredAt']);
+      allow create, delete: if false;
+    }
+
+    // Jawaban:
+    // read: owner can read their own answers, or admin can read all.
+    // create: owner can create their own answers.
+    match /jawaban/{docId} {
+      allow read: if request.auth != null && (request.auth.token.email == resource.data.nim + '@mhs.lab-ap.com' || isAdmin());
+      allow create: if request.auth != null && request.auth.token.email == request.resource.data.nim + '@mhs.lab-ap.com';
+      allow update, delete: if false;
+    }
+
+    // Soal collections: read-only untuk client, write via Admin SDK
+    match /pretest/{docId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+    match /posttest/{docId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+    match /keterampilan/{docId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+    match /ujian_praktik/{docId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // Sesi: read-only untuk client, write via Admin SDK
+    match /sesi_aktif/{docId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+    match /sesi_ujian_praktik/{docId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // Rubrik penilaian: read for authenticated users, write via Admin SDK only
+    match /rubrik_penilaian/{docId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // Activity Logs: admin can read, anyone auth can create, nobody can update/delete
+    match /activity_logs/{docId} {
+      allow read: if isAdmin();
+      allow create: if request.auth != null;
+      allow update, delete: if false;
+    }
+
+    // =========================================================================
+    // V2 SCHEMA (post-migration) — mirror dari rules di atas tapi pakai field baru
+    // =========================================================================
+
+    function isAdminV2() {
+      return request.auth != null &&
+        get(/databases/$(database)/documents/mahasiswa_v2/$(request.auth.token.email.replace('@mhs.lab-ap.com', ''))).data.role == 'admin';
+    }
+
+    // Mahasiswa V2:
+    // - get: bebas (buat cek isRegistered sebelum login)
+    // - list: admin only
+    // - update: owner cuma boleh ubah is_registered + registered_at, ATAU admin
+    // - create/delete: admin only
+    match /mahasiswa_v2/{nim} {
+      allow get: if true;
+      allow list: if isAdminV2();
+      allow update: if isAdminV2()
+        || (isOwner(nim)
+            && request.resource.data.diff(resource.data).affectedKeys()
+                .hasOnly(['is_registered', 'registered_at']));
+      allow create, delete: if isAdminV2();
+    }
+
+    // Jawaban V2:
+    // - read: owner own answers atau admin
+    // - create: owner create own atau admin (untuk input manual)
+    // - update: admin only (untuk grading)
+    match /jawaban_v2/{docId} {
+      allow read: if request.auth != null
+        && (request.auth.token.email == resource.data.nim + '@mhs.lab-ap.com' || isAdminV2());
+      allow create: if isAdminV2()
+        || (request.auth != null
+            && request.auth.token.email == request.resource.data.nim + '@mhs.lab-ap.com');
+      allow update: if isAdminV2();
+      allow delete: if isAdminV2();
+    }
+
+    // Soal V2 (gabungan pretest/posttest/keterampilan/ujian_praktik):
+    match /soal_v2/{docId} {
+      allow read: if request.auth != null;
+      allow write: if isAdminV2();
+    }
+
+    // Sesi V2 (gabungan sesi_aktif + sesi_ujian_praktik):
+    match /sesi_v2/{docId} {
+      allow read: if request.auth != null;
+      allow write: if isAdminV2();
+    }
+
+    // Rubrik V2:
+    match /rubrik_v2/{docId} {
+      allow read: if request.auth != null;
+      allow write: if isAdminV2();
+    }
+
+    // Activity Logs V2:
+    match /activity_logs_v2/{docId} {
+      allow read: if isAdminV2();
+      allow create: if request.auth != null;
+      allow update, delete: if false;
+    }
+  }
+}
