@@ -14,8 +14,10 @@
   import { authState } from '$lib/stores/auth.svelte';
   import { toast } from '$lib/stores/toast.svelte';
   import { logActivity } from '$lib/utils/activity-log';
+  import { gradePT, gradeKeterampilan, gradeUjianPraktik } from '$lib/utils/grading';
+  import { getDoc as fsGetDoc } from 'firebase/firestore';
   import AdminLayout from '$lib/components/AdminLayout.svelte';
-  import type { Jawaban, ModulId, QuizType } from '$lib/firebase/types';
+  import type { Jawaban, ModulId, QuizType, SoalKeterampilan } from '$lib/firebase/types';
 
   type FilterType = 'all' | QuizType;
   type FilterModul = 'all' | ModulId;
@@ -36,6 +38,9 @@
   let editNilai = $state<number | null>(null);
   let editKeaktifan = $state<number | null>(null);
   let savingNilai = $state(false);
+
+  // Auto-grade state — track per-jawaban grading status
+  let gradingIds = $state<Set<string>>(new Set());
 
   $effect(() => {
     if (authState.isAdmin) {
@@ -177,6 +182,49 @@
       toast.show('Gagal simpan nilai', 'error');
     } finally {
       savingNilai = false;
+    }
+  }
+
+  async function handleAutoGrade(j: Jawaban & { _id: string }) {
+    if (gradingIds.has(j._id)) return;
+    gradingIds.add(j._id);
+    gradingIds = new Set(gradingIds);
+
+    try {
+      let result;
+      if (j.type === 'pretest' || j.type === 'posttest') {
+        result = await gradePT(j);
+      } else if (j.type === 'keterampilan') {
+        // Fetch rubrik items dari soal_v2
+        const soalSnap = await fsGetDoc(doc(db, COLLECTIONS.soal, `${j.modul_id}_keterampilan`));
+        if (!soalSnap.exists()) throw new Error('Rubrik keterampilan tidak ditemukan');
+        const items = (soalSnap.data() as SoalKeterampilan).items;
+        result = await gradeKeterampilan(j, items);
+      } else if (j.type === 'ujian_praktik') {
+        result = await gradeUjianPraktik(j);
+      } else {
+        throw new Error('Type tidak dikenali');
+      }
+
+      await updateDoc(doc(db, COLLECTIONS.jawaban, j._id), {
+        nilai: result.nilai,
+        grading_detail: result.grading_detail
+      });
+      await logActivity({
+        role: 'admin',
+        nim: authState.mahasiswa?.nim ?? null,
+        action: 'admin_grade',
+        message: `AI-graded ${j.snapshot?.nama ?? j.nim} (${j.type}) → nilai: ${result.nilai}`
+      });
+      toast.show(`✅ ${j.snapshot?.nama ?? j.nim}: ${result.nilai}`, 'success');
+      await loadRekap();
+    } catch (err) {
+      console.error('Auto-grade error:', err);
+      const message = err instanceof Error ? err.message : 'Unknown';
+      toast.show(`Gagal grade: ${message}`, 'error');
+    } finally {
+      gradingIds.delete(j._id);
+      gradingIds = new Set(gradingIds);
     }
   }
 
@@ -326,20 +374,36 @@
                     </td>
                     <td class="td-actions" style="white-space:nowrap;">
                       <button
-                        class="btn-action"
+                        class="btn-detail"
                         onclick={() => showDetail(s)}
-                        title="Detail">👁️</button
+                        title="Lihat Detail"
                       >
+                        Detail
+                      </button>
                       <button
-                        class="btn-action"
+                        class="btn-grade"
+                        disabled={gradingIds.has(s._id)}
+                        onclick={() => handleAutoGrade(s)}
+                        title="Auto-Grade dengan AI"
+                      >
+                        {gradingIds.has(s._id) ? '⏳' : '🤖'}
+                      </button>
+                      <button
+                        class="btn-detail"
+                        style="background:rgba(245,158,11,0.15); color:#fbbf24; border-color:rgba(245,158,11,0.3);"
                         onclick={() => openEditNilai(s)}
-                        title="Edit Nilai">📝</button
+                        title="Edit Nilai Manual"
                       >
+                        📝
+                      </button>
                       <button
-                        class="btn-action btn-action-danger"
+                        class="btn-detail"
+                        style="background:rgba(239,68,68,0.15); color:#ef4444; border-color:rgba(239,68,68,0.3);"
                         onclick={() => handleDelete(s)}
-                        title="Hapus">🗑️</button
+                        title="Hapus Jawaban"
                       >
+                        🗑️
+                      </button>
                     </td>
                   </tr>
                 {/each}
