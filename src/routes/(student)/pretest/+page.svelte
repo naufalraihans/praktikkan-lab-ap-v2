@@ -141,7 +141,7 @@
 
 <Navbar title="PRE-TEST" showBack backHref="/" />
 
-<main class="dashboard-content">
+<main class="dashboard-content content-full">
   {#if view === 'quiz' && sesi}
     {@const questions = sesi.snapshot.pretest_questions}
     <header class="quiz-header animate-fade-in">

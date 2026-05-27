@@ -185,7 +185,7 @@
 
 <Navbar title="POST-TEST" showBack backHref="/" />
 
-<main class="dashboard-content">
+<main class="dashboard-content content-full">
   {#if view === 'quiz' && sesi}
     {@const questions = sesi.snapshot.posttest_questions}
     <header class="quiz-header animate-fade-in">

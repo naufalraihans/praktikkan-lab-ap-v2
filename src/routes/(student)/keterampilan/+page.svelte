@@ -176,7 +176,7 @@
 
 <Navbar title="KETERAMPILAN" showBack backHref="/" />
 
-<main class="dashboard-content">
+<main class="dashboard-content content-full">
   {#if view === 'quiz' && sesi}
     {@const items = sesi.snapshot.keterampilan_items}
     {@const judul = sesi.snapshot.keterampilan_judul_program}
