@@ -2701,3 +2701,21 @@ button {
   .md-split { grid-template-columns: 1fr; }
   .form-modal-wide .modal-content { width: 95vw; }
 }
+
+/* ============================================================================
+ * V2 additions — anchor buttons (SvelteKit pakai <a> untuk routing)
+ * ============================================================================ */
+a.primary-btn,
+a.secondary-btn,
+a.btn-detail,
+a.btn-grade {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+a.primary-btn:hover,
+a.secondary-btn:hover {
+  text-decoration: none;
+}

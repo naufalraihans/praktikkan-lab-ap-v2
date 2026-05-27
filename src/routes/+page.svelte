@@ -202,14 +202,36 @@
                 ini.
               </p>
               <div
-                style="display:grid; gap:0.5rem; grid-template-columns: repeat(2, 1fr); margin-top:1.25rem;"
+                style="display:grid; gap:0.75rem; grid-template-columns: repeat(2, 1fr); margin-top:1.25rem;"
               >
-                <a href="/pretest" class="primary-btn" style="text-align:center;">Pre-test</a>
-                <a href="/posttest" class="primary-btn" style="text-align:center;">Post-test</a>
-                <a href="/keterampilan" class="primary-btn" style="text-align:center;"
-                  >Keterampilan</a
+                <a
+                  href="/pretest"
+                  class="primary-btn"
+                  style="text-decoration:none; padding:0.85rem 1.25rem; justify-content:center; display:flex; align-items:center; gap:0.5rem;"
                 >
-                <a href="/ujian" class="primary-btn" style="text-align:center;">Ujian Praktik</a>
+                  📝 Pre-test
+                </a>
+                <a
+                  href="/posttest"
+                  class="primary-btn"
+                  style="text-decoration:none; padding:0.85rem 1.25rem; justify-content:center; display:flex; align-items:center; gap:0.5rem;"
+                >
+                  📋 Post-test
+                </a>
+                <a
+                  href="/keterampilan"
+                  class="primary-btn"
+                  style="text-decoration:none; padding:0.85rem 1.25rem; justify-content:center; display:flex; align-items:center; gap:0.5rem;"
+                >
+                  💻 Keterampilan
+                </a>
+                <a
+                  href="/ujian"
+                  class="primary-btn"
+                  style="text-decoration:none; padding:0.85rem 1.25rem; justify-content:center; display:flex; align-items:center; gap:0.5rem;"
+                >
+                  🎯 Ujian Praktik
+                </a>
               </div>
             </div>
           </div>
