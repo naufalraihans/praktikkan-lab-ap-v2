@@ -105,7 +105,7 @@
 
 {#if !authState.ready}
   <div id="app-container">
-    <div class="view-container active">
+    <div id="login-view" class="view-container active">
       <div class="login-card glass-panel" style="text-align:center;">
         <div class="spinner" style="width:40px;height:40px;border-width:3px;margin:0 auto;"></div>
         <p class="text-muted mt-4">Memuat...</p>
@@ -115,7 +115,7 @@
 {:else if authState.isLoggedIn && authState.mahasiswa && !authState.isAdmin}
   <!-- ====== HOME / LOBBY (STUDENT) ====== -->
   <div id="app-container">
-    <div class="view-container active">
+    <div id="home-view" class="view-container active">
       <div class="home-decor">
         <div class="laser-line laser-1"></div>
         <div class="laser-line laser-2"></div>
@@ -220,7 +220,14 @@
 {:else}
   <!-- ====== LOGIN VIEWS ====== -->
   <div id="app-container">
-    <div class="view-container active">
+    <div
+      id={view === 'login'
+        ? 'login-view'
+        : view === 'set-password'
+          ? 'set-password-view'
+          : 'enter-password-view'}
+      class="view-container active"
+    >
       <div class="glow-orb orb-1"></div>
       <div class="glow-orb orb-2"></div>
 

@@ -1,9 +1,7 @@
 <script lang="ts">
   /**
-   * Route group guard untuk route mahasiswa (pretest, posttest, keterampilan, ujian).
-   * - Redirect ke "/" kalau belum login atau role admin
-   * - Show spinner kalau auth belum ready
-   * - Render children kalau student logged in
+   * Route group guard untuk route mahasiswa.
+   * Juga provide #app-container + home-decor wrapper sesuai pattern original.
    */
   import { goto } from '$app/navigation';
   import { authState } from '$lib/stores/auth.svelte';
@@ -23,10 +21,19 @@
 </script>
 
 {#if !authState.ready}
-  <div class="quiz-state-container">
-    <div class="spinner" style="width:40px;height:40px;border-width:3px;"></div>
-    <p class="text-muted mt-4">Memeriksa sesi...</p>
+  <div id="app-container">
+    <div class="quiz-state-container">
+      <div class="spinner" style="width:40px;height:40px;border-width:3px;"></div>
+      <p class="text-muted mt-4">Memeriksa sesi...</p>
+    </div>
   </div>
 {:else if authState.isLoggedIn && !authState.isAdmin}
-  {@render children()}
+  <div id="app-container">
+    <div class="home-decor">
+      <div class="laser-line laser-1"></div>
+      <div class="laser-line laser-2"></div>
+      <div class="laser-line laser-3"></div>
+    </div>
+    {@render children()}
+  </div>
 {/if}
