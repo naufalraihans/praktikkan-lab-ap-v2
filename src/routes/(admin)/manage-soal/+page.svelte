@@ -22,7 +22,7 @@
     setGithubPat
   } from '$lib/utils/github-upload';
   import AdminLayout from '$lib/components/AdminLayout.svelte';
-  import MarkdownEditor from '$lib/components/EdraEditor.svelte';
+  import MarkdownEditor from '$lib/components/MarkdownEditor.svelte';
   import InstruksiList from '$lib/components/InstruksiList.svelte';
   import type {
     ModulId,
