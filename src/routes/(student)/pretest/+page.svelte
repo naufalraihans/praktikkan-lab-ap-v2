@@ -12,6 +12,7 @@
   import { toast } from '$lib/stores/toast.svelte';
   import { createEditor, renderMathJax } from '$lib/utils/monaco';
   import { logActivity } from '$lib/utils/activity-log';
+  import { saveAutosave, loadAutosave, clearAutosave, makeDebounce } from '$lib/utils/autosave';
   import Navbar from '$lib/components/Navbar.svelte';
   import QuizState from '$lib/components/QuizState.svelte';
   import type { SesiReguler } from '$lib/firebase/types';
@@ -24,8 +25,25 @@
   let editorContainers = $state<(HTMLDivElement | null)[]>([]);
   let questionsContainer = $state<HTMLDivElement | null>(null);
 
-  const editors = new Map<number, { getValue: () => string }>();
+  interface MonacoMin {
+    getValue: () => string;
+    setValue: (v: string) => void;
+    onDidChangeModelContent: (cb: () => void) => void;
+  }
+  const editors = new Map<number, MonacoMin>();
   let unsubscribeAccess: (() => void) | null = null;
+
+  // Save current answers ke localStorage — dipanggil by debounced or force
+  function saveNow() {
+    const mahasiswa = authState.mahasiswa;
+    if (!mahasiswa || !sesi) return;
+    const answers: string[] = [];
+    for (let i = 0; i < sesi.snapshot.pretest_questions.length; i++) {
+      answers.push(editors.get(i)?.getValue() ?? '');
+    }
+    saveAutosave(mahasiswa.nim, sesi.modul_id, 'pretest', { answers });
+  }
+  const triggerAutosave = makeDebounce(saveNow, 300);
 
   // Load saat auth ready (route guard ada di (student)/+layout.svelte)
   $effect(() => {
@@ -35,6 +53,19 @@
   });
 
   $effect(() => () => unsubscribeAccess?.());
+
+  // Force-save on unmount (navigate away) + beforeunload (close tab/refresh)
+  $effect(() => {
+    if (typeof window === 'undefined') return;
+    const handler = () => saveNow();
+    window.addEventListener('beforeunload', handler);
+    window.addEventListener('pagehide', handler);
+    return () => {
+      saveNow(); // last-chance save before unmount
+      window.removeEventListener('beforeunload', handler);
+      window.removeEventListener('pagehide', handler);
+    };
+  });
 
   async function loadQuiz() {
     try {
@@ -73,18 +104,41 @@
   $effect(() => {
     if (view !== 'quiz' || !sesi) return;
     const questions = sesi.snapshot.pretest_questions;
+    const mahasiswa = authState.mahasiswa;
+    if (!mahasiswa) return;
+
+    // Restore autosave (if any)
+    const saved = loadAutosave<{ answers: string[] }>(
+      mahasiswa.nim,
+      sesi.modul_id,
+      'pretest'
+    );
+
     (async () => {
+      let restored = false;
       for (let i = 0; i < questions.length; i++) {
         const container = editorContainers[i];
         if (container && !editors.has(i)) {
           try {
-            editors.set(i, await createEditor(container, { language: 'plaintext' }));
+            const ed = (await createEditor(container, { language: 'plaintext' })) as MonacoMin;
+            // Restore saved answer (if any)
+            const savedVal = saved?.answers?.[i];
+            if (savedVal && savedVal.trim()) {
+              ed.setValue(savedVal);
+              restored = true;
+            }
+            ed.onDidChangeModelContent(() => triggerAutosave());
+            editors.set(i, ed);
           } catch (e) {
             console.error('Failed to mount editor', i, e);
           }
         }
       }
+      if (restored) {
+        toast.show('✅ Jawaban sebelumnya dipulihkan', 'success');
+      }
     })();
+
     if (questionsContainer) {
       setTimeout(() => renderMathJax(questionsContainer), 100);
     }
@@ -128,11 +182,19 @@
         action: 'submitted_jawaban',
         message: `Submitted jawaban Pre-test (${MODUL_INFO[sesi.modul_id].display_name})`
       });
+      clearAutosave(nim, sesi.modul_id, 'pretest');
       view = autoSubmit ? 'denied' : 'submitted';
       if (!autoSubmit) toast.show('Jawaban berhasil dikirim!', 'success');
     } catch (err) {
       console.error('Error submitting:', err);
-      toast.show('Gagal mengirim jawaban', 'error');
+      // Force denied even on failure — student SHOULD NOT continue typing kalau
+      // akses udah ditutup. Jawaban tetap di localStorage untuk recovery.
+      if (autoSubmit) {
+        view = 'denied';
+        toast.show('Sesi ditutup. Jawaban tersimpan di local — hubungi admin.', 'error');
+      } else {
+        toast.show('Gagal mengirim jawaban', 'error');
+      }
     } finally {
       submitting = false;
     }

@@ -7,6 +7,7 @@
   import { createEditor } from '$lib/utils/monaco';
   import { runCode, detectLang, type Lang, type RunCodeResult } from '$lib/utils/code-runner';
   import { logActivity } from '$lib/utils/activity-log';
+  import { saveAutosave, loadAutosave, clearAutosave, makeDebounce } from '$lib/utils/autosave';
   import Navbar from '$lib/components/Navbar.svelte';
   import QuizState from '$lib/components/QuizState.svelte';
   import type { SesiReguler } from '$lib/firebase/types';
@@ -29,12 +30,24 @@
     running: false
   });
 
-  let editor: {
+  interface MonacoMin {
     getValue: () => string;
     setValue: (v: string) => void;
     getModel: () => unknown;
-  } | null = null;
+    onDidChangeModelContent: (cb: () => void) => void;
+  }
+  let editor: MonacoMin | null = null;
   let unsubscribeAccess: (() => void) | null = null;
+
+  function saveNow() {
+    const m = authState.mahasiswa;
+    if (!m || !sesi || !editor) return;
+    saveAutosave(m.nim, sesi.modul_id, 'keterampilan', {
+      kode: editor.getValue(),
+      bahasa: lang
+    });
+  }
+  const triggerAutosave = makeDebounce(saveNow, 300);
 
   $effect(() => {
     if (authState.isLoggedIn && !authState.isAdmin && view === 'loading') {
@@ -43,6 +56,18 @@
   });
 
   $effect(() => () => unsubscribeAccess?.());
+
+  $effect(() => {
+    if (typeof window === 'undefined') return;
+    const handler = () => saveNow();
+    window.addEventListener('beforeunload', handler);
+    window.addEventListener('pagehide', handler);
+    return () => {
+      saveNow();
+      window.removeEventListener('beforeunload', handler);
+      window.removeEventListener('pagehide', handler);
+    };
+  });
 
   async function loadKeterampilan() {
     try {
@@ -81,13 +106,27 @@
 
   $effect(() => {
     if (view !== 'quiz' || !editorContainer || editor) return;
+    const m = authState.mahasiswa;
+    const s = sesi;
+    if (!m || !s) return;
+
+    const saved = loadAutosave<{ kode: string; bahasa: Lang }>(m.nim, s.modul_id, 'keterampilan');
+
     (async () => {
       try {
-        editor = await createEditor(editorContainer!, {
-          value: BOILERPLATES[lang],
-          language: lang,
+        const initialLang = saved?.bahasa ?? lang;
+        const initialValue = saved?.kode && saved.kode.trim() ? saved.kode : BOILERPLATES[initialLang];
+        if (saved?.bahasa) lang = saved.bahasa;
+        const ed = (await createEditor(editorContainer!, {
+          value: initialValue,
+          language: initialLang,
           lineNumbers: 'on'
-        });
+        })) as MonacoMin;
+        ed.onDidChangeModelContent(() => triggerAutosave());
+        editor = ed;
+        if (saved?.kode && saved.kode.trim() && saved.kode !== BOILERPLATES[initialLang]) {
+          toast.show('✅ Jawaban sebelumnya dipulihkan', 'success');
+        }
       } catch (e) {
         console.error('Failed to mount editor', e);
       }
@@ -111,6 +150,7 @@
     ) {
       editor.setValue(BOILERPLATES[newLang]);
     }
+    triggerAutosave();
   }
 
   async function handleRunCode() {
@@ -159,11 +199,17 @@
         action: 'submitted_jawaban',
         message: `Submitted jawaban Keterampilan (${MODUL_INFO[sesi.modul_id].display_name})`
       });
+      clearAutosave(nim, sesi.modul_id, 'keterampilan');
       view = autoSubmit ? 'denied' : 'submitted';
       if (!autoSubmit) toast.show('Kode berhasil dikirim!', 'success');
     } catch (err) {
       console.error('Error submitting:', err);
-      toast.show('Gagal mengirim kode', 'error');
+      if (autoSubmit) {
+        view = 'denied';
+        toast.show('Sesi ditutup. Kode tersimpan di local — hubungi admin.', 'error');
+      } else {
+        toast.show('Gagal mengirim kode', 'error');
+      }
     } finally {
       submitting = false;
     }

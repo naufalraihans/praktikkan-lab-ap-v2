@@ -8,6 +8,7 @@
   import { renderMarkdownToHtml } from '$lib/utils/markdown';
   import { runCode, detectLang, type Lang, type RunCodeResult } from '$lib/utils/code-runner';
   import { logActivity } from '$lib/utils/activity-log';
+  import { saveAutosave, loadAutosave, clearAutosave, makeDebounce } from '$lib/utils/autosave';
   import Navbar from '$lib/components/Navbar.svelte';
   import QuizState from '$lib/components/QuizState.svelte';
   import type { SesiReguler } from '$lib/firebase/types';
@@ -23,8 +24,24 @@
   let questionsContainer = $state<HTMLDivElement | null>(null);
   let outputs = $state<Record<number, { result: RunCodeResult | null; running: boolean }>>({});
 
-  const editors = new Map<number, { getValue: () => string }>();
+  interface MonacoMin {
+    getValue: () => string;
+    setValue: (v: string) => void;
+    onDidChangeModelContent: (cb: () => void) => void;
+  }
+  const editors = new Map<number, MonacoMin>();
   let unsubscribeAccess: (() => void) | null = null;
+
+  function saveNow() {
+    const m = authState.mahasiswa;
+    if (!m || !sesi) return;
+    const answers: string[] = [];
+    for (let i = 0; i < sesi.snapshot.posttest_questions.length; i++) {
+      answers.push(editors.get(i)?.getValue() ?? '');
+    }
+    saveAutosave(m.nim, sesi.modul_id, 'posttest', { answers });
+  }
+  const triggerAutosave = makeDebounce(saveNow, 300);
 
   const boilerplate = $derived(
     lang === 'c'
@@ -39,6 +56,18 @@
   });
 
   $effect(() => () => unsubscribeAccess?.());
+
+  $effect(() => {
+    if (typeof window === 'undefined') return;
+    const handler = () => saveNow();
+    window.addEventListener('beforeunload', handler);
+    window.addEventListener('pagehide', handler);
+    return () => {
+      saveNow();
+      window.removeEventListener('beforeunload', handler);
+      window.removeEventListener('pagehide', handler);
+    };
+  });
 
   async function loadQuiz() {
     try {
@@ -78,26 +107,37 @@
   $effect(() => {
     if (view !== 'quiz' || !sesi) return;
     const questions = sesi.snapshot.posttest_questions;
+    const m = authState.mahasiswa;
+    if (!m) return;
+
+    const saved = loadAutosave<{ answers: string[] }>(m.nim, sesi.modul_id, 'posttest');
+
     (async () => {
+      let restored = false;
       for (let i = 0; i < questions.length; i++) {
         const container = editorContainers[i];
         if (container && !editors.has(i)) {
           const q = questions[i]!;
           const isHard = q.level === 'hard';
           try {
-            editors.set(
-              i,
-              await createEditor(container, {
-                language: isHard ? lang : 'plaintext',
-                lineNumbers: isHard ? 'on' : 'off',
-                value: isHard ? boilerplate : ''
-              })
-            );
+            const ed = (await createEditor(container, {
+              language: isHard ? lang : 'plaintext',
+              lineNumbers: isHard ? 'on' : 'off',
+              value: isHard ? boilerplate : ''
+            })) as MonacoMin;
+            const savedVal = saved?.answers?.[i];
+            if (savedVal && savedVal.trim() && savedVal !== boilerplate) {
+              ed.setValue(savedVal);
+              restored = true;
+            }
+            ed.onDidChangeModelContent(() => triggerAutosave());
+            editors.set(i, ed);
           } catch (e) {
             console.error('Failed to mount editor', i, e);
           }
         }
       }
+      if (restored) toast.show('✅ Jawaban sebelumnya dipulihkan', 'success');
     })();
     if (questionsContainer) {
       setTimeout(() => renderMathJax(questionsContainer), 100);
@@ -172,11 +212,17 @@
         action: 'submitted_jawaban',
         message: `Submitted jawaban Post-test (${MODUL_INFO[sesi.modul_id].display_name})`
       });
+      clearAutosave(nim, sesi.modul_id, 'posttest');
       view = autoSubmit ? 'denied' : 'submitted';
       if (!autoSubmit) toast.show('Jawaban berhasil dikirim!', 'success');
     } catch (err) {
       console.error('Error submitting:', err);
-      toast.show('Gagal mengirim jawaban', 'error');
+      if (autoSubmit) {
+        view = 'denied';
+        toast.show('Sesi ditutup. Jawaban tersimpan di local — hubungi admin.', 'error');
+      } else {
+        toast.show('Gagal mengirim jawaban', 'error');
+      }
     } finally {
       submitting = false;
     }
